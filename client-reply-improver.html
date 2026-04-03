@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Reply Improver</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --surface: #ffffff;
+    --surface2: #f0f0f2;
+    --border: #e4e4e7;
+    --text: #18181b;
+    --text2: #71717a;
+    --accent: #6366f1;
+    --accent-h: #4f46e5;
+    --card-bg: #ffffff;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    --radius: 14px;
+  }
+  .dark {
+    --bg: #111113;
+    --surface: #1c1c1f;
+    --surface2: #27272a;
+    --border: #3f3f46;
+    --text: #fafafa;
+    --text2: #a1a1aa;
+    --accent: #818cf8;
+    --accent-h: #6366f1;
+    --card-bg: #1c1c1f;
+    --shadow: 0 2px 16px rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .logo { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; display:flex;align-items:center;gap:8px; }
+  .logo-icon { font-size:20px; }
+  .topbar-right { display:flex;gap:10px;align-items:center; }
+  .pill-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); font-size: 12px; padding: 5px 12px;
+    border-radius: 20px; cursor: pointer; transition: all 0.15s;
+    display:flex;align-items:center;gap:5px;
+  }
+  .pill-btn:hover { background: var(--border); color: var(--text); }
+  .pill-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .main { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+  .input-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    font-size: 15px; line-height: 1.6; background: transparent;
+    color: var(--text); font-family: inherit; min-height: 80px;
+  }
+  textarea::placeholder { color: var(--text2); }
+  .input-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; flex-wrap: wrap; gap: 8px;
+  }
+  .tone-row { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+  .tone-label { font-size:12px;color:var(--text2); }
+  select {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; padding: 5px 10px;
+    border-radius: 8px; outline: none; cursor: pointer;
+  }
+  .btn-row { display:flex;gap:8px;flex-wrap:wrap; }
+  .btn {
+    padding: 8px 18px; border-radius: 10px; border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    display:flex;align-items:center;gap:6px;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .action-chips { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px; }
+  .chip {
+    padding: 6px 13px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text2); transition: all 0.15s;
+  }
+  .chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .results { display:flex;flex-direction:column;gap:12px; }
+  .result-card {
+    background: var(--card-bg); border: 1.5px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px 18px; animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .card-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
+  .card-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 20px; background: var(--surface2); color: var(--accent);
+  }
+  .card-actions { display:flex;gap:6px; }
+  .icon-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 9px; font-size: 12px; cursor: pointer;
+    color: var(--text2); transition: all 0.15s; display:flex;align-items:center;gap:4px;
+  }
+  .icon-btn:hover { background: var(--accent); color:#fff; border-color:var(--accent); }
+  .icon-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+  .card-text { font-size: 15px; line-height: 1.65; color: var(--text); }
+  .loading { text-align:center; padding:32px; color:var(--text2); font-size:14px; }
+  .spinner { display:inline-block; width:20px;height:20px;border:2.5px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .history-section { margin-top:32px; }
+  .history-items { display:flex;flex-direction:column;gap:8px; }
+  .history-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-size: 13px; color: var(--text2); cursor: pointer;
+    display:flex;align-items:center;justify-content:space-between; transition: all 0.15s;
+  }
+  .history-item:hover { border-color:var(--accent); color:var(--text); }
+  .history-text { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px; }
+  .history-time { font-size:11px; flex-shrink:0; }
+  .kbd { display:inline-block;padding:2px 6px;background:var(--surface2);border:1px solid var(--border);
+    border-radius:4px;font-size:10px;font-family:monospace;color:var(--text2); }
+  .empty-state { text-align:center;padding:48px 16px;color:var(--text2);font-size:14px; }
+  .empty-icon { font-size:36px;margin-bottom:12px; }
+  .shortcut-hint { font-size:11px;color:var(--text2);margin-top:4px; }
+  @media(max-width:500px) {
+    .topbar { padding:12px 16px; }
+    .main { padding:20px 12px 60px; }
+    .input-footer { flex-direction:column;align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><span class="logo-icon">✦</span> Client Reply Improver</div>
+  <div class="topbar-right">
+    <button class="pill-btn" id="autoCopyBtn" onclick="toggleAutoCopy()">⚡ Auto-copy</button>
+    <button class="pill-btn" onclick="toggleDark()" id="darkBtn">🌙 Dark</button>
+  </div>
+</div>
+
+<div class="main">
+  <div style="margin-bottom:6px" class="section-label">Your rough message</div>
+  <div class="input-card">
+    <textarea id="inputText" placeholder="Type or paste your rough message here…&#10;e.g. okay sir i will check with amol sir" rows="3"></textarea>
+    <div class="input-footer">
+      <div class="tone-row">
+        <span class="tone-label">Tone:</span>
+        <select id="toneSelect">
+          <option value="Professional">Professional</option>
+          <option value="Friendly">Friendly</option>
+          <option value="Confident">Confident</option>
+          <option value="Polite">Polite</option>
+          <option value="Direct">Direct</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="improve()" id="improveBtn">
+          ✦ Improve <span class="kbd" style="color:#fff;background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3)">⌘↵</span>
+        </button>
+        <button class="btn btn-secondary" onclick="regenerate()" id="regenBtn" style="display:none">↺ Regenerate</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-chips" id="actionChips" style="display:none">
+    <button class="chip" onclick="quickAction('shorter')">✂ Make Shorter</button>
+    <button class="chip" onclick="quickAction('formal')">🎩 More Formal</button>
+    <button class="chip" onclick="quickAction('grammar')">✓ Fix Grammar</button>
+    <button class="chip" onclick="quickAction('whatsapp')">💬 WhatsApp Tone</button>
+    <button class="chip" onclick="quickAction('email')">📧 Email Tone</button>
+  </div>
+
+  <div id="outputArea"></div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="section-label" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <span>Recent inputs</span>
+      <button class="chip" style="padding:3px 10px;font-size:11px" onclick="clearHistory()">Clear</button>
+    </div>
+    <div class="history-items" id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://api.anthropic.com/v1/messages";
+let isDark = false, autoCopy = false;
+let history = JSON.parse(localStorage.getItem('cri_history') || '[]');
+let lastInput = '', lastTone = '';
+
+function toggleDark() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('darkBtn').textContent = isDark ? '☀ Light' : '🌙 Dark';
+}
+function toggleAutoCopy() {
+  autoCopy = !autoCopy;
+  document.getElementById('autoCopyBtn').classList.toggle('active', autoCopy);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') improve();
+});
+
+async function callClaude(prompt) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+function buildPrompt(text, tone, mode = 'improve') {
+  if (mode === 'improve') {
+    return `You are a professional business communication assistant. Improve the following rough message for client communication.
+
+Tone preference: ${tone}
+
+Generate exactly 3 variations in this JSON format (no markdown, no explanation, just JSON):
+{
+  "professional": "...",
+  "friendly": "...",
+  "short": "..."
+}
+
+Rules:
+- professional: Formal, polished, respectful
+- friendly: Warm but professional, approachable
+- short: Under 15 words, crisp and direct
+- Keep the original intent/meaning
+- Fix grammar, punctuation, capitalization
+- Remove filler words like "sir sir", excessive sir usage
+- Sound natural and confident
+
+Rough message: "${text}"`;
+  }
+  const actions = {
+    shorter: `Make this client message shorter and more concise (under 15 words). Return only the improved message, no explanation:\n"${text}"`,
+    formal: `Rewrite this client message in a very formal, corporate tone. Return only the improved message, no explanation:\n"${text}"`,
+    grammar: `Fix only the grammar, spelling, and punctuation of this message. Keep the original tone and words as much as possible. Return only the corrected message, no explanation:\n"${text}"`,
+    whatsapp: `Rewrite this message in a casual, friendly WhatsApp tone for business. Keep it short and conversational. Return only the message:\n"${text}"`,
+    email: `Rewrite this as a professional email body (no subject/greeting needed). Complete sentences, formal but clear. Return only the message:\n"${text}"`
+  };
+  return actions[mode];
+}
+
+async function improve() {
+  const txt = document.getElementById('inputText').value.trim();
+  if (!txt) { document.getElementById('inputText').focus(); return; }
+  const tone = document.getElementById('toneSelect').value;
+  lastInput = txt; lastTone = tone;
+  setLoading(true);
+
+  try {
+    const raw = await callClaude(buildPrompt(txt, tone, 'improve'));
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderResults([
+      { tag: '✦ Professional', text: parsed.professional },
+      { tag: '☀ Friendly Professional', text: parsed.friendly },
+      { tag: '⚡ Short & Crisp', text: parsed.short }
+    ]);
+    addHistory(txt);
+  } catch(e) {
+    document.getElementById('outputArea').innerHTML = `<div class="result-card"><div class="card-text" style="color:#ef4444">Error: Could not generate. Check your API key or try again.</div></div>`;
+  }
+  setLoading(false);
+}
+
+async function quickAction(mode) {
+  const txt = document.getElementById('inputText').value.trim() || lastInput;
+  if (!txt) return;
+  setLoading(true);
+  try {
+    const res = await callClaude(buildPrompt(txt, '', mode));
+    const labels = { shorter:'✂ Shorter', formal:'🎩 More Formal', grammar:'✓ Grammar Fixed', whatsapp:'💬 WhatsApp', email:'📧 Email' };
+    renderResults([{ tag: labels[mode], text: res.trim() }], true);
+  } catch(e) {}
+  setLoading(false);
+}
+
+async function regenerate() {
+  if (!lastInput) return;
+  document.getElementById('inputText').value = lastInput;
+  document.getElementById('toneSelect').value = lastTone;
+  await improve();
+}
+
+function renderResults(items, append = false) {
+  const area = document.getElementById('outputArea');
+  const html = items.map((item, i) => `
+    <div class="result-card" style="animation-delay:${i*0.07}s">
+      <div class="card-header">
+        <span class="card-tag">${item.tag}</span>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="copyText(this, \`${esc(item.text)}\`)">⎘ Copy</button>
+        </div>
+      </div>
+      <div class="card-text">${item.text}</div>
+    </div>`).join('');
+
+  if (append) {
+    area.insertAdjacentHTML('afterbegin', `<div class="results">${html}</div>`);
+  } else {
+    area.innerHTML = `<div class="results">${html}</div>`;
+    if (autoCopy && items[0]) navigator.clipboard.writeText(items[0].text).catch(()=>{});
+  }
+  document.getElementById('actionChips').style.display = 'flex';
+  document.getElementById('regenBtn').style.display = '';
+}
+
+function esc(s) { return s.replace(/`/g,'\\`').replace(/\$/g,'\\$'); }
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = '⎘ Copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('improveBtn');
+  btn.disabled = on;
+  if (on) {
+    document.getElementById('outputArea').innerHTML = `<div class="loading"><span class="spinner"></span>Improving your message…</div>`;
+    document.getElementById('actionChips').style.display = 'none';
+    document.getElementById('regenBtn').style.display = 'none';
+  }
+}
+
+function addHistory(txt) {
+  history = [{ text: txt, time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) }, ...history].slice(0, 5);
+  localStorage.setItem('cri_history', JSON.stringify(history));
+  renderHistory();
+}
+function clearHistory() {
+  history = []; localStorage.removeItem('cri_history'); renderHistory();
+}
+function renderHistory() {
+  const sec = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (!history.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  list.innerHTML = history.map(h => `
+    <div class="history-item" onclick="loadHistory(\`${esc(h.text)}\`)">
+      <span class="history-text">${h.text}</span>
+      <span class="history-time">${h.time}</span>
+    </div>`).join('');
+}
+function loadHistory(txt) {
+  document.getElementById('inputText').value = txt;
+  document.getElementById('inputText').focus();
+}
+
+renderHistory();
+if (history.length) document.getElementById('historySection').style.display='';
+</script>
+</body>
+</html>
